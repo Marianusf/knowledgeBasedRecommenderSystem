@@ -30,23 +30,29 @@
                     class="w-full border rounded p-2" />
             </div>
             <div>
-                <label for="processor" class="block font-semibold mb-1">Processor (opsional)</label>
-                <input type="text" name="processor" id="processor" value="{{ request('processor') }}"
-                    placeholder="Snapdragon" class="w-full border rounded p-2" />
+                <label for="battery_capacity" class="block font-semibold mb-1">Baterai Minimal (mAh)</label>
+                <input type="number" name="battery_capacity" id="battery_capacity"
+                    value="{{ request('battery_capacity') }}" placeholder="4000" class="w-full border rounded p-2" />
             </div>
+            <div>
+                <label for="preferred_brand" class="block font-semibold mb-1">Preferensi Brand (opsional)</label>
+                <input type="text" name="preferred_brand" id="preferred_brand"
+                    value="{{ request('preferred_brand') }}" placeholder="Contoh: Apple, Samsung"
+                    class="w-full border rounded p-2" />
+            </div>
+
             <button type="submit"
                 class="w-full bg-blue-600 text-white p-3 rounded hover:bg-blue-700 transition duration-300">
                 Cari Handphone
             </button>
         </form>
 
-        <!-- Daftar Rekomendasi Gabungan -->
-
+        <!-- Rekomendasi Terbaik -->
         @if ($rankedPhones->isEmpty())
-            <p class="text-center text-gray-600">Tidak ada handphone yang cocok dengan kriteria yang Anda pilih. Silakan
-                coba ubah filter pencarian.</p>
+            <p class="text-center text-gray-600">Tidak ada handphone yang cocok dengan kriteria yang Anda pilih.
+                Silakan coba ubah filter pencarian.</p>
         @else
-            <h2 class="text-xl font-semibold mb-4">Rekomendasi Terbaik Sesuai Pilihan Anda</h2>
+            <h2 class="text-xl font-semibold mb-4">Rekomendasi Terbaik Sesuai Kriteria Anda</h2>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
                 @foreach ($rankedPhones as $phone)
                     <div class="bg-white rounded shadow p-4 flex flex-col">
@@ -61,15 +67,14 @@
                         <p><strong>RAM:</strong> {{ $phone->ram }} GB</p>
                         <p><strong>Prosesor:</strong> {{ $phone->processor }}</p>
                         <p><strong>Baterai:</strong> {{ $phone->battery_capacity }} mAh</p>
-                        <p><strong>Berat:</strong> {{ $phone->mobile_weight }} gram</p>
                         <p><strong>Kecocokan:</strong> {{ round($phone->similarity_score * 100, 0) }}%</p>
                     </div>
                 @endforeach
             </div>
         @endif
 
+        <!-- Alternatif Lain -->
         <hr class="my-8" />
-
         <h2 class="text-xl font-semibold mb-4">Alternatif Lain yang Mungkin Cocok untuk Anda</h2>
 
         @if ($allPhones->isEmpty())
@@ -79,10 +84,10 @@
                 @foreach ($allPhones as $phone)
                     <div class="bg-white rounded shadow p-4 flex flex-col">
                         <div class="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center overflow-hidden">
-                            <img src="{{ $phone->image_path }}"
-                                alt="{{ $phone->company_name }} {{ $phone->model_name }}"
+                            <img src="{{ $phone->image_path }}" alt="{{ $phone->company_name }}"
                                 class="object-contain max-h-full max-w-full" />
                         </div>
+
                         <h2 class="text-xl font-semibold mb-2">{{ $phone->company_name }} {{ $phone->model_name }}
                         </h2>
                         <p><strong>Tahun Rilis:</strong> {{ $phone->launched_year }}</p>
@@ -90,14 +95,11 @@
                         <p><strong>RAM:</strong> {{ $phone->ram }} GB</p>
                         <p><strong>Prosesor:</strong> {{ $phone->processor }}</p>
                         <p><strong>Baterai:</strong> {{ $phone->battery_capacity }} mAh</p>
-                        <p><strong>Berat:</strong> {{ $phone->mobile_weight }} gram</p>
                         <p><strong>Kecocokan:</strong> {{ round($phone->similarity_score * 100, 0) }}%</p>
                     </div>
                 @endforeach
             </div>
         @endif
-
-
     </div>
 </body>
 
