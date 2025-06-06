@@ -14,7 +14,6 @@
         <h1 class="text-3xl font-bold mb-6 text-center">Sistem Rekomendasi Handphone</h1>
 
         <form action="{{ route('recommendation.search') }}" method="GET" class="space-y-5 mb-8">
-
             <div>
                 <label for="max_price" class="block font-semibold mb-1">Harga Maksimal (Rp)</label>
                 <input type="number" name="max_price" id="max_price" value="{{ request('max_price') }}"
@@ -44,25 +43,28 @@
             </button>
         </form>
 
-        @if (isset($phones))
-            @if ($phones->isEmpty())
-                <p class="text-center text-gray-600">Tidak ada handphone yang cocok dengan kriteria.</p>
-            @else
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    @foreach ($phones as $phone)
-                        <div class="bg-white rounded shadow p-4 flex flex-col">
-                            <h2 class="text-xl font-semibold mb-2">{{ $phone->company_name }} {{ $phone->model_name }}
-                            </h2>
-                            <p><strong>Tahun Rilis:</strong> {{ $phone->launched_year }}</p>
-                            <p><strong>Harga:</strong> Rp {{ number_format($phone->price, 0, ',', '.') }}</p>
-                            <p><strong>RAM:</strong> {{ $phone->ram }} GB</p>
-                            <p><strong>Processor:</strong> {{ $phone->processor }}</p>
-                            <p><strong>Baterai:</strong> {{ $phone->battery_capacity }} mAh</p>
-                            <p><strong>Berat:</strong> {{ $phone->mobile_weight }} gram</p>
+        @if ($phones->isEmpty())
+            <p class="text-center text-gray-600">Tidak ada handphone yang cocok dengan kriteria.</p>
+        @else
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                @foreach ($phones as $phone)
+                    <div class="bg-white rounded shadow p-4 flex flex-col">
+                        <div class="h-40 bg-gray-200 rounded mb-4 flex items-center justify-center overflow-hidden">
+                            <img
+                                src="{{ $phone->image_path ? asset($phone->image_path) : asset('images/phone/default.jpg') }}">
                         </div>
-                    @endforeach
-                </div>
-            @endif
+                        <h2 class="text-xl font-semibold mb-2">
+                            {{ $phone->company_name }} {{ $phone->model_name }}
+                        </h2>
+                        <p><strong>Tahun Rilis:</strong> {{ $phone->launched_year }}</p>
+                        <p><strong>Harga:</strong> Rp {{ number_format($phone->price, 0, ',', '.') }}</p>
+                        <p><strong>RAM:</strong> {{ $phone->ram }} GB</p>
+                        <p><strong>Processor:</strong> {{ $phone->processor }}</p>
+                        <p><strong>Baterai:</strong> {{ $phone->battery_capacity }} mAh</p>
+                        <p><strong>Berat:</strong> {{ $phone->mobile_weight }} gram</p>
+                    </div>
+                @endforeach
+            </div>
         @endif
 
     </div>

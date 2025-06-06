@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\File;
 use Illuminate\Http\Request;
 use App\Models\Phone;
 
@@ -30,6 +31,27 @@ class RecommendationController extends Controller
         }
 
         $phones = $query->get();
+        foreach ($phones as $phone) {
+            $baseName = strtolower(str_replace(' ', '', $phone->company_name));
+            $extensions = ['jpg', 'jpeg'];
+            $imageFound = false;
+
+            foreach ($extensions as $ext) {
+                $relativePath = "storage/images/phone/{$baseName}.{$ext}";
+
+                if (File::exists(public_path($relativePath))) {
+                    $phone->image_path = asset($relativePath);
+                    $imageFound = true;
+                    break;
+                }
+            }
+
+            if (!$imageFound) {
+                $phone->image_path = asset('images/phone/default.jpg');
+            }
+        }
+        // dd($phones->first()->toArray());
+
 
         return view('recommendation.index', compact('phones'));
     }
