@@ -9,23 +9,19 @@ use Illuminate\Support\Facades\Storage;
 
 class PhoneController extends Controller
 {
-    public function index(Request $request)
+    public function index()
     {
-        $query = Phone::query();
+        $phones = Phone::latest();
 
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('model_name', 'like', "%{$search}%")
-                    ->orWhere('company_name', 'like', "%{$search}%");
-            });
+        if (request('search')) {
+            $phones = $phones->where('company_name', 'like', '%' . request('search') . '%')
+                ->orWhere('model_name', 'like', '%' . request('search') . '%');
         }
 
-        $phones = $query->latest()->paginate(12);
+        $phones = $phones->paginate(12);
 
         return view('admin.phones.index', compact('phones'));
     }
-
 
     public function create()
     {
@@ -35,12 +31,17 @@ class PhoneController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'model' => 'required|string|max:255',
             'company_name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
+            'model_name' => 'required|string|max:255',
+            'mobile_weight' => 'required|numeric|min:50|max:3000',
+            'ram' => 'required|numeric|min:1|max:128',
+            'front_camera' => 'required|string|max:255',
+            'back_camera' => 'required|string|max:255',
+            'processor' => 'required|string|max:255',
+            'battery_capacity' => 'required|numeric|min:500|max:10000',
+            'screen_size' => 'required|string|max:50',
             'launched_year' => 'required|integer|min:2000|max:' . now()->year,
-            'ram' => 'required|numeric|min:1',
-            'battery_capacity' => 'required|numeric|min:500',
+            'price' => 'required|numeric|min:100000|max:99999999',
             'image' => 'nullable|image|mimes:jpg,jpeg|max:2048',
         ]);
 
@@ -51,7 +52,7 @@ class PhoneController extends Controller
             $request->file('image')->storeAs('public/images/phone', $filename);
         }
 
-        return redirect()->route('admin.phones.index')->with('success', 'Phone added.');
+        return redirect()->route('admin.phones.index')->with('success', 'Data HP berhasil ditambahkan.');
     }
 
     public function edit(Phone $phone)
@@ -62,12 +63,17 @@ class PhoneController extends Controller
     public function update(Request $request, Phone $phone)
     {
         $request->validate([
-            'model' => 'required|string|max:255',
             'company_name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
+            'model_name' => 'required|string|max:255',
+            'mobile_weight' => 'required|numeric|min:50|max:1000',
+            'ram' => 'required|numeric|min:1|max:64',
+            'front_camera' => 'required|string|max:255',
+            'back_camera' => 'required|string|max:255',
+            'processor' => 'required|string|max:255',
+            'battery_capacity' => 'required|numeric|min:500|max:10000',
+            'screen_size' => 'required|string|max:50',
             'launched_year' => 'required|integer|min:2000|max:' . now()->year,
-            'ram' => 'required|numeric|min:1',
-            'battery_capacity' => 'required|numeric|min:500',
+            'price' => 'required|numeric|min:100000|max:99999999',
             'image' => 'nullable|image|mimes:jpg,jpeg|max:2048',
         ]);
 
@@ -78,34 +84,11 @@ class PhoneController extends Controller
             $request->file('image')->storeAs('public/images/phone', $filename);
         }
 
-        return redirect()->route('admin.phones.index')->with('success', 'Phone updated.');
+        return redirect()->route('admin.phones.index')->with('success', 'Data HP berhasil diperbarui.');
     }
-
     public function destroy(Phone $phone)
     {
         $phone->delete();
         return redirect()->route('admin.phones.index')->with('success', 'Phone deleted.');
-    }
-    public function show(Phone $phone)
-    {
-        $baseName = strtolower(str_replace(' ', '', $phone->company_name));
-        $extensions = ['jpg', 'jpeg'];
-        $imageFound = false;
-
-        foreach ($extensions as $ext) {
-            $relativePath = "storage/images/phone/{$baseName}.{$ext}";
-
-            if (File::exists(public_path($relativePath))) {
-                $phone->image_path = asset($relativePath);
-                $imageFound = true;
-                break;
-            }
-        }
-
-        if (!$imageFound) {
-            $phone->image_path = asset('images/phone/default.jpg');
-        }
-
-        return view('admin.phones.show', compact('phone'));
     }
 }

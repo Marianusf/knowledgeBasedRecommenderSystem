@@ -50,6 +50,7 @@
                             class="w-full h-40 object-cover rounded-md shadow-sm">
 
                         <div>
+                            <h2 class="text-lg font-semibold text-gray-900">{{ $hp->model_name }}</h2>
                             <h2 class="text-lg font-semibold text-gray-900">{{ $hp->company_name }}</h2>
                             <p class="text-gray-700 font-medium">Rp{{ number_format($hp->price, 0, ',', '.') }}</p>
                         </div>

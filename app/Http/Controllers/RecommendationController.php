@@ -19,74 +19,103 @@ class RecommendationController extends Controller
 
     public function searchHybrid(Request $request)
     {
-        /* ===== 1. CONSTRAINT-BASED FILTER ===== */
         $query = Phone::query();
 
-        // sinkron dengan nama field di form
         if ($request->max_price) {
-            $query->where('price', '<=', $request->max_price);
+            $minPrice = max(0, $request->max_price - 300000);
+            $maxPrice = $request->max_price + 300000;
+            $query->whereBetween('price', [$minPrice, $maxPrice]);
         }
         if ($request->min_launched_year) {
             $query->where('launched_year', '>=', $request->min_launched_year);
         }
         if ($request->min_ram) {
-            $query->where('ram', '>=', $request->min_ram);
+            $query->where('ram', '>=', $request->min_ram - 1);
         }
-        if ($request->battery_capacity) {                     // <─ sama dgn form
-            $query->where('battery_capacity', '>=', $request->battery_capacity);
+        if ($request->battery_capacity) {
+            $query->where('battery_capacity', '>=', $request->battery_capacity - 500);
         }
-        if ($request->preferred_brand) {                      // <─ sama dgn form
-            $query->where('company_name', 'like', '%' . $request->preferred_brand . '%');
+        if ($request->preferred_brand) {
+            $query->whereRaw('LOWER(company_name) = ?', [strtolower($request->preferred_brand)]);
         }
 
         $constraintPhones = $query->get();
 
-
-        /* ===== 2. CASE-BASED SIMILARITY (tanpa bobot) ===== */
         $similarity = function ($phone) use ($request) {
             $score = 0;
             $count = 0;
 
             if ($request->preferred_brand) {
-                $score += strtolower($request->preferred_brand) === strtolower($phone->company_name) ? 1 : 0;
+                if (strtolower($request->preferred_brand) !== strtolower($phone->company_name)) return 0;
+                $score += 1;
                 $count++;
             }
+
             if ($request->min_ram) {
-                $score += $phone->ram >= $request->min_ram ? 1 : 0;
-                $count++;
+                $diff = abs($phone->ram - $request->min_ram);
+                if ($diff <= 1) {
+                    $score += 1 - ($diff / 1);
+                    $count++;
+                } else return 0;
             }
+
             if ($request->max_price) {
-                $score += $phone->price <= $request->max_price ? 1 : 0;
-                $count++;
+                $diff = abs($phone->price - $request->max_price);
+                if ($diff <= 300000) {
+                    $score += 1 - ($diff / 300000);
+                    $count++;
+                } else return 0;
             }
+
             if ($request->min_launched_year) {
-                $score += $phone->launched_year >= $request->min_launched_year ? 1 : 0;
+                if ($phone->launched_year < $request->min_launched_year) return 0;
+                $score += 1;
                 $count++;
             }
+
             if ($request->battery_capacity) {
-                $score += $phone->battery_capacity >= $request->battery_capacity ? 1 : 0;
-                $count++;
+                $diff = abs($phone->battery_capacity - $request->battery_capacity);
+                if ($diff <= 500) {
+                    $score += 1 - ($diff / 500);
+                    $count++;
+                } else return 0;
             }
+
             return $count ? $score / $count : 0;
         };
 
-        /* hasil utama: sudah lolos constraint + di-rank */
+        // Ranked phones
         $rankedPhones = $constraintPhones
             ->map(function ($p) use ($similarity) {
                 $p->similarity_score = $similarity($p);
                 return $p;
             })
+            ->filter(fn($p) => $p->similarity_score > 0)
             ->sortByDesc('similarity_score')
             ->values();
 
-        /* alternatif: MASIH menggunakan data yg lolos constraint */
-        $alternativePhones = $rankedPhones->slice(5);   // misalnya tampilkan 5 teratas sebagai utama, sisanya alternatif
+        // Top 5 recommendations
+        $topPhones = $rankedPhones->take(5);
 
+        // Remaining alternatives from rankedPhones
+        $rankedAlternatives = $rankedPhones->slice(5, 10)->values();
 
-        /* ===== 3. TAMBAH PATH GAMBAR ===== */
+        // Additional alternatives from constraintPhones but not in rankedPhones
+        $rankedIds = $rankedPhones->pluck('id')->toArray();
+        $extraAlternatives = $constraintPhones
+            ->filter(fn($p) => !in_array($p->id, $rankedIds))
+            ->map(function ($p) {
+                $p->similarity_score = null;
+                return $p;
+            })
+            ->values();
+
+        // Merge alternatives
+        $alternativePhones = $rankedAlternatives->merge($extraAlternatives)->take(10);
+
+        // Add image path
         $addImage = function ($p) {
             $base = strtolower(str_replace(' ', '', $p->company_name));
-
             foreach (['jpg', 'jpeg'] as $ext) {
                 $rel = "storage/images/phone/{$base}.{$ext}";
                 if (File::exists(public_path($rel))) {
@@ -94,22 +123,18 @@ class RecommendationController extends Controller
                     return $p;
                 }
             }
-
             $p->image_path = asset('images/phone/default.jpg');
             return $p;
         };
 
-        $rankedPhones      = $rankedPhones->map($addImage);
+        $topPhones = $topPhones->map($addImage);
         $alternativePhones = $alternativePhones->map($addImage);
 
-
-        /* ===== 4. RETURN VIEW ===== */
         return view('recommendation.index', [
-            'rankedPhones' => $rankedPhones->take(5),      // 5 terbaik
-            'allPhones'    => $alternativePhones           // sisanya alternatif, tapi tetap memenuhi constraint
+            'rankedPhones' => $topPhones,
+            'allPhones' => $alternativePhones,
         ]);
     }
-
 
 
 
