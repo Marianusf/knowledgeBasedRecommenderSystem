@@ -9,11 +9,23 @@ use Illuminate\Support\Facades\Storage;
 
 class PhoneController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $phones = Phone::latest()->paginate(10);
+        $query = Phone::query();
+
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('model_name', 'like', "%{$search}%")
+                    ->orWhere('company_name', 'like', "%{$search}%");
+            });
+        }
+
+        $phones = $query->latest()->paginate(12);
+
         return view('admin.phones.index', compact('phones'));
     }
+
 
     public function create()
     {
@@ -44,7 +56,7 @@ class PhoneController extends Controller
 
     public function edit(Phone $phone)
     {
-        return view('admin.phones.edit', compact('phone'));
+        return view('admin.phones.createEdit', compact('phone'));
     }
 
     public function update(Request $request, Phone $phone)
@@ -73,5 +85,27 @@ class PhoneController extends Controller
     {
         $phone->delete();
         return redirect()->route('admin.phones.index')->with('success', 'Phone deleted.');
+    }
+    public function show(Phone $phone)
+    {
+        $baseName = strtolower(str_replace(' ', '', $phone->company_name));
+        $extensions = ['jpg', 'jpeg'];
+        $imageFound = false;
+
+        foreach ($extensions as $ext) {
+            $relativePath = "storage/images/phone/{$baseName}.{$ext}";
+
+            if (File::exists(public_path($relativePath))) {
+                $phone->image_path = asset($relativePath);
+                $imageFound = true;
+                break;
+            }
+        }
+
+        if (!$imageFound) {
+            $phone->image_path = asset('images/phone/default.jpg');
+        }
+
+        return view('admin.phones.show', compact('phone'));
     }
 }
