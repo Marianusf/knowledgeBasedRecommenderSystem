@@ -156,3 +156,101 @@ class RecommendationController extends Controller
     //     return view('recommendation.index', compact('phones'));
     // }
 }
+// public function searchHybrid(Request $request)
+// {
+//     // 1. Constraint-Based Filter (hard filter)
+//     $query = Phone::query();
+
+//     if ($request->max_price) {
+//         $query->where('price', '<=', $request->max_price);
+//     }
+//     if ($request->min_launched_year) {
+//         $query->where('launched_year', '>=', $request->min_launched_year);
+//     }
+//     if ($request->min_ram) {
+//         $query->where('ram', '>=', $request->min_ram);
+//     }
+//     if ($request->battery_capacity) {
+//         $query->where('battery_capacity', '>=', $request->battery_capacity);
+//     }
+//     if ($request->preferred_brand) {
+//         $query->where('company_name', 'like', '%' . $request->preferred_brand . '%');
+//     }
+
+//     $constraintPhones = $query->get();
+
+//     // Data stats untuk normalisasi (ambil dari dataset Anda)
+//     $maxBattery = 6000;    // misal max baterai dataset
+//     $minBattery = 1000;    // min baterai dataset
+//     $maxRam = 16;          // max RAM dataset
+//     $maxPrice = 20000000;  // max harga dataset
+//     $maxYearDiff = 10;     // max perbedaan tahun
+
+//     // 2. Similarity with weighted distance
+//     $similarity = function ($phone) use ($request, $maxBattery, $minBattery, $maxRam, $maxPrice, $maxYearDiff) {
+//         $score = 0;
+//         $count = 0;
+
+//         if ($request->preferred_brand) {
+//             // brand exact match = 1, else 0
+//             $score += strtolower($request->preferred_brand) === strtolower($phone->company_name) ? 1 : 0;
+//             $count++;
+//         }
+//         if ($request->min_ram) {
+//             $ramDiff = abs($phone->ram - $request->min_ram);
+//             $score += 1 - min(1, $ramDiff / $maxRam);
+//             $count++;
+//         }
+//         if ($request->max_price) {
+//             $priceDiff = max(0, $phone->price - $request->max_price);
+//             $score += 1 - min(1, $priceDiff / $maxPrice);
+//             $count++;
+//         }
+//         if ($request->min_launched_year) {
+//             $yearDiff = abs($phone->launched_year - $request->min_launched_year);
+//             $score += 1 - min(1, $yearDiff / $maxYearDiff);
+//             $count++;
+//         }
+//         if ($request->battery_capacity) {
+//             $batteryDiff = abs($phone->battery_capacity - $request->battery_capacity);
+//             $score += 1 - min(1, $batteryDiff / ($maxBattery - $minBattery));
+//             $count++;
+//         }
+
+//         return $count ? $score / $count : 0;
+//     };
+
+//     // 3. Hitung similarity dan sorting
+//     $rankedPhones = $constraintPhones
+//         ->map(function ($p) use ($similarity) {
+//             $p->similarity_score = $similarity($p);
+//             return $p;
+//         })
+//         ->sortByDesc('similarity_score')
+//         ->values();
+
+//     $alternativePhones = $rankedPhones->slice(5);
+
+//     // 4. Tambah path gambar
+//     $addImage = function ($p) {
+//         $base = strtolower(str_replace(' ', '', $p->company_name));
+//         foreach (['jpg', 'jpeg'] as $ext) {
+//             $rel = "storage/images/phone/{$base}.{$ext}";
+//             if (File::exists(public_path($rel))) {
+//                 $p->image_path = asset($rel);
+//                 return $p;
+//             }
+//         }
+//         $p->image_path = asset('images/phone/default.jpg');
+//         return $p;
+//     };
+
+//     $rankedPhones = $rankedPhones->map($addImage);
+//     $alternativePhones = $alternativePhones->map($addImage);
+
+//     // 5. Return view
+//     return view('recommendation.index', [
+//         'rankedPhones' => $rankedPhones->take(5),
+//         'allPhones' => $alternativePhones,
+//     ]);
+// }
