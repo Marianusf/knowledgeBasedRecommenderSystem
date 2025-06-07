@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Admin\AuthController;
 
 Route::get('/', function () {
-    return redirect()->route('admin.login');
+    return view('HomePage');
 });
 
 
