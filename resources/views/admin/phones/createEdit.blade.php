@@ -15,7 +15,6 @@
 </head>
 
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen text-gray-800 dark:text-gray-100 transition duration-300">
-    <!-- Toggle Mode -->
     <div class="flex justify-end p-4">
         <button onclick="toggleDarkMode()"
             class="bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-100 px-4 py-2 rounded shadow">
@@ -23,7 +22,6 @@
         </button>
     </div>
 
-    <!-- Form Card -->
     <div class="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
         <h1 class="text-3xl font-bold mb-6 text-center">
             {{ isset($phone) ? 'Edit Data HP' : 'Tambah HP Baru' }}
@@ -137,7 +135,6 @@
                 </div>
             @endforeach
 
-            <!-- Upload Gambar -->
             <div class="col-span-1 md:col-span-2">
                 <label for="image" class="block text-sm font-medium mb-1">Gambar (opsional)</label>
                 <input type="file" name="image" id="image" accept="image/*" onchange="previewImage(event)"
@@ -152,7 +149,6 @@
                 </div>
             </div>
 
-            <!-- Submit Button -->
             <div class="col-span-1 md:col-span-2">
                 <button type="submit"
                     class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-xl transition duration-200">
@@ -162,7 +158,6 @@
         </form>
     </div>
 
-    <!-- Scripts -->
     <script>
         function toggleDarkMode() {
             document.documentElement.classList.toggle('dark');
